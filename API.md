@@ -6,7 +6,7 @@ Following blocks are recognized as peripherals:
 
 ## TIS-3D casing
 
-Most functions take `side` as their first argument. Valid values are: `"bottom"`, `"top"`, `"left"`, `"right"`, `"front"`, `"back"`.
+Most functions take `side` as their first argument. Valid values are: `"bottom"`, `"top"`, `"north"`, `"south"`, `"west"`, `"east"`.
 
 ### getPos(): {x: int, y: int, z: int}
 

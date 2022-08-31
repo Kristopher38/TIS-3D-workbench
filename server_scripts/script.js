@@ -5,7 +5,8 @@ settings.logRemovedRecipes = true
 settings.logSkippedRecipes = false
 settings.logErroringRecipes = true
 
-const sideIndexes = {bottom: 0, top: 1, north: 2, south: 3, west: 4, east: 5} 
+const sideIndexes = {bottom: 0, top: 1, north: 2, south: 3, west: 4, east: 5}
+const inverseSideIndexes = {0: "bottom", 1: "top", 2: "north", 3: "south", 4: "west", 5: "east"}
 const getModule = {
 	"tis3d:execution_module": getExecModule,
 	"tis3d:random_access_memory_module": getMemModule,
@@ -25,6 +26,21 @@ const getModule = {
 	"tis3d:timer_module": getTimerModule,
 }
 
+function expect(args, idx, type) {
+	if (args.count() <= idx)
+		throw `invalid number of arguments`
+
+	// null if nil or function
+	let x = args.get(idx)
+
+	if (x instanceof java("java.lang.String") && type != "string" ||
+		x instanceof java("java.lang.Double") && type != "number" ||
+		x instanceof java("java.lang.Boolean") && type != "boolean" ||
+		x instanceof java("java.util.HashMap") && type != "table" ||
+		x == null && (type != "nil"))
+		throw `invalid argument #${idx+1} type, expected ${type}`
+}
+
 function toJsArray(arr) {
 	let jsArr = []
 	for (var i = 0; i < arr.length; i++)
@@ -39,19 +55,22 @@ function getModuleNbt(container, side) {
 
 function getModuleName(container, side) {
 	let moduleNames = container.entityData.get("inventory").get("inventory")
-	return moduleNames[side].getString("id")
+	let name = moduleNames[side].getString("id")
+	if (!(name in getModule))
+		throw `no module on side ${inverseSideIndexes[side]}`
+	return name
 }
 
 function getSide(args) {
 	let sideStr = args.getString(0)
 	if (sideStr in sideIndexes)
 		return sideIndexes[sideStr]
+	else throw `invalid side ${sideStr}`
 }
 
 function setModuleNbt(container, side, nbt) {
 	let modules = container.entityData.get("casing").get("modules")
 	modules[side] = nbt
-	console.info(modules[side])
 	container.entityData = container.entityData.merge({ casing: { modules: modules }})
 }
 
@@ -143,9 +162,18 @@ function getStackModule(nbt) {
 }
 
 function getTerminalModule(nbt) {
+	// reading tag lists seems to be royally broken
+	// the following should work but it doesn't
+
+	// 8 - string (type of list elements) 
+	// let display = nbt.getTagList("display", 8)
+	// let jsDisplay = []
+	// for (var i = 0; i < display.tagCount(); i++)
+	// 	jsDisplay[i] = display.getStringTagAt(i)
+
 	return {
 		output: nbt.getString("output"),
-		display: toJsArray(nbt.getStringArray("display"))
+		// display: jsDisplay
 	}
 }
 
@@ -179,40 +207,76 @@ function setROMData(container, side, data) {
 }
 
 global.setCode = (container, dir, args) => {
-	let side = getSide(args)	
-	let name = getModuleName(container, side)
-	let code = args.getString(1)
+	try {
+		expect(args, 0, "string")
+		expect(args, 1, "string")
+		let side = getSide(args)
+		let name = getModuleName(container, side)
+		let code = args.getString(1)
 
-	if (name.equals("tis3d:execution_module")) {
-		setCode(container, side, code)
-		return null
-	} else return false
+		if (code.length() > 2048)
+			throw `length of code (${code.length()}) exceeds 2048 character limit`
+
+		let lines = code.split("\n").length
+		if (lines > 40)
+			throw `code has ${lines} lines, but maximum is 40`
+
+		if (name.equals("tis3d:execution_module")) {
+			setCode(container, side, code)
+			return true
+		} else throw `can't set code on ${name.replace("tis3d:", "")}`
+	} catch (e) {
+		return false, e
+	}
 }
 
 global.updateMemory = (container, dir, args) => {
-	let side = getSide(args)
-	let name = getModuleName(container, side)
-	let module = getModuleNbt(container, side)
-	let data = args.getTable(1)
-	let memData = module.getByteArray("memory")
+	try {
+		expect(args, 0, "string")
+		expect(args, 1, "table")
+		let side = getSide(args)
+		let name = getModuleName(container, side)
 
-	data.forEach((addr, val) => {
-		memData[addr-1] = val > 127 ? -(val ^ 0xff) - 1 : val	// convert to signed
-	});
+		if (!name.equals("tis3d:random_access_memory_module") &&
+			!name.equals("tis3d:read_only_memory_module"))
+			throw `can't update memory on ${name.replace("tis3d:", "")}`
 
-	if (name.equals("tis3d:random_access_memory_module"))
-		setRAMData(container, side, memData)
-	else if (name.equals("tis3d:read_only_memory_module"))
-		setROMData(container, side, memData)
+		let module = getModuleNbt(container, side)
+		let data = args.getTable(1)
+		let memData = module.getByteArray("memory")
+
+		data.forEach((addr, val) => {
+			if (addr < 1 || addr > 256)
+				throw `address ${addr} out of range (1-256)`
+			if (val < 0 || val > 255)
+				throw `value ${val} out of range (0-255) at index ${addr}`
+
+			memData[addr-1] = val > 127 ? -(val ^ 0xff) - 1 : val	// convert to signed
+		});
+
+		if (name.equals("tis3d:random_access_memory_module"))
+			setRAMData(container, side, memData)
+		else if (name.equals("tis3d:read_only_memory_module"))
+			setROMData(container, side, memData)
+
+		return true
+	} catch (e) {
+		return false, e
+	}
 }
 
 global.getModule = (container, dir, args) => {
-	let side = getSide(args)
-	let name = getModuleName(container, side)
-	let module = getModuleNbt(container, side)
-	let moduleData = getModule[name](module)
-	moduleData.name = name.replace("tis3d:", "")
-	return moduleData
+	try {
+		expect(args, 0, "string")
+		let side = getSide(args)
+		let name = getModuleName(container, side)
+		let module = getModuleNbt(container, side)
+		let moduleData = getModule[name](module)
+		moduleData.name = name.replace("tis3d:", "")
+		return moduleData
+	} catch (e) {
+		return false, e
+	}
 }
 
 global.getPos = (container, dir, args) => {
