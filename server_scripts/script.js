@@ -223,10 +223,16 @@ global.setCode = (container, dir, args) => {
 
 		if (name.equals("tis3d:execution_module")) {
 			setCode(container, side, code)
-			return true
+			return {
+				success: true,
+				reason: ""
+			}
 		} else throw `can't set code on ${name.replace("tis3d:", "")}`
 	} catch (e) {
-		return false, e
+		return {
+			success: false,
+			reason: String(e)
+		}
 	}
 }
 
@@ -259,9 +265,15 @@ global.updateMemory = (container, dir, args) => {
 		else if (name.equals("tis3d:read_only_memory_module"))
 			setROMData(container, side, memData)
 
-		return true
+		return {
+			success: true,
+			reason: ""
+		}
 	} catch (e) {
-		return false, e
+		return {
+			success: false,
+			reason: String(e)
+		}
 	}
 }
 
@@ -273,9 +285,14 @@ global.getModule = (container, dir, args) => {
 		let module = getModuleNbt(container, side)
 		let moduleData = getModule[name](module)
 		moduleData.name = name.replace("tis3d:", "")
+		moduleData.success = true
+		moduleData.reason = ""
 		return moduleData
 	} catch (e) {
-		return false, e
+		return {
+			success: false,
+			reason: String(e)
+		}
 	}
 }
 
@@ -283,6 +300,8 @@ global.getPos = (container, dir, args) => {
 	return {
 		x: container.x,
 		y: container.y,
-		z: container.z
+		z: container.z,
+		success: true,
+		reason: ""
 	}
 }

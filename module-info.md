@@ -2,7 +2,7 @@
 
 This document lists information that can be queried with the `getModule` function. All queried data is returned in a table with key-value pairs.
 
-In addition to the module-specific data specified below, all modules also return their name under the key `name`.
+In addition to the module-specific data specified below, all modules also return their name under the key `name`, boolean `success` indicating an error/success of the call and `reason` containing explanation of the error, if there was any.
 
 ## Execution module
 
