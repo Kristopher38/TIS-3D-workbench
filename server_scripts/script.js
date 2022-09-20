@@ -285,6 +285,7 @@ global.getModule = (container, dir, args) => {
 		let module = getModuleNbt(container, side)
 		let moduleData = getModule[name](module)
 		moduleData.name = name.replace("tis3d:", "")
+		moduleData.facing = module.getByte("facing")
 		moduleData.success = true
 		moduleData.reason = ""
 		return moduleData
