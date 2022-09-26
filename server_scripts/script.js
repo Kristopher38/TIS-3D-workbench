@@ -162,18 +162,15 @@ function getStackModule(nbt) {
 }
 
 function getTerminalModule(nbt) {
-	// reading tag lists seems to be royally broken
-	// the following should work but it doesn't
-
 	// 8 - string (type of list elements) 
-	// let display = nbt.getTagList("display", 8)
-	// let jsDisplay = []
-	// for (var i = 0; i < display.tagCount(); i++)
-	// 	jsDisplay[i] = display.getStringTagAt(i)
+	let display = nbt.getList("display", 8)
+	let jsDisplay = []
+	for (var i = 0; i < display.size(); i++)
+		jsDisplay[i] = display.getString(i)
 
 	return {
 		output: nbt.getString("output"),
-		// display: jsDisplay
+		display: jsDisplay
 	}
 }
 
