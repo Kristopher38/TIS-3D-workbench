@@ -8,15 +8,15 @@ Following blocks are recognized as peripherals:
 
 Most functions take `side` as their first argument. Valid values are: `"bottom"`, `"top"`, `"north"`, `"south"`, `"west"`, `"east"`.
 
-### getPos(): {x: int, y: int, z: int}
+### getPos(): table
 
-Returns table with the position of casing in the world (useful for figuring out the physical layout of casings) and fields `success` and `reason`, indicating whether the operation was successful and error reason (currently always succeeds).
+Returns table with fields `x`, `y`, `z` indicating the position of casing in the world (useful for figuring out the physical layout of casings) and fields `success` and `reason`, indicating whether the operation was successful and error reason (currently always succeeds).
 
-### setCode(side: string, code: string): ok: bool, err: string|nil
+### setCode(side: string, code: string): table
 
 Replaces the code on an execution module at the specified `side` with `code`. Returns table with fields `success` and `reason`, indicating whether the operation was successful and error reason.
 
-### updateMemory(side: string, data: table): ok: bool, err: string|nil
+### updateMemory(side: string, data: table): table
 
 **Partially** replaces contents of RAM or ROM at the specified `side`. Only bytes which have a corresponding index in `data` will be replaced. Indices are numbered starting from 1 (as per standard Lua conventions) up to 256. Values are treated as unsigned bytes in range from 0 to 255 (both inclusive).
 
@@ -33,7 +33,7 @@ To replace contents of the whole memory, `data` should contain the whole range o
 
 Returns table with fields `success` and `reason`, indicating whether the operation was successful and error reason.
 
-### getModule(side: string): module: table OR false, err: string
+### getModule(side: string): module: table
 
 Returns table with info about module at the specified `side`. Contents of the returned table differ depending on the queried module. Detailed info can be found in [Available module info](module-info.md)
 
