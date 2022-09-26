@@ -303,3 +303,20 @@ global.getPos = (container, dir, args) => {
 		reason: ""
 	}
 }
+
+global.getPipes = (container, dir, args) => {
+	let pipes = container.entityData.get("pipes")
+	let pipesJs = []
+	for (var i = 0; i < pipes.length; i++) {
+		pipesJs.push({
+			readState: pipes[i].getByte("readState"),
+			writeState: pipes[i].getByte("writeState"),
+			value: pipes[i].getByte("value"),
+		})
+	}
+	return {
+		state: pipesJs,
+		succes: true,
+		reason: ""
+	}
+}

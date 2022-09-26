@@ -36,3 +36,12 @@ Returns table with fields `success` and `reason`, indicating whether the operati
 ### getModule(side: string): module: table OR false, err: string
 
 Returns table with info about module at the specified `side`. Contents of the returned table differ depending on the queried module. Detailed info can be found in [Available module info](module-info.md)
+
+### getPipes(): table
+
+Returns a table with a field `state` which is a table containing exactly 24 elements specifying state of all pipes that the casing has. In addition, returned table has fields `success` and `reason`, indicating whether the operation was successful and error reason (currently always succeeds). A pipe is a communication interface to neighbouring modules. Every pipe can be read from or written to by modules to transfer data between them. Each pipe's state is a table consisting of fields:
+| Field      | Type  | Description                      |
+| ---------- | ----- | -------------------------------- |
+| value      | short | Value which is being transferred |
+| readState  | byte  | TBD                              |
+| writeState | byte  | TBD                              |

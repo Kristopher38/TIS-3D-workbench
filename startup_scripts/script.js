@@ -14,6 +14,9 @@ onEvent("computercraft.peripheral", event => {
 		.mainThreadMethod("getPos", (container, dir, args) => {
 			return global.getPos(container, dir, args)
 		})
+		.mainThreadMethod("getPipes", (container, dir, args) => {
+			return global.getPipes(container, dir, args)
+		})
 })
 
 
